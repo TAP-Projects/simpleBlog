@@ -5,5 +5,5 @@ block content
   
   include errors
   
-  form(action="/articles/" + article.id + "/edit", method="post")
+  form(action=`/articles/${article.id}/edit`, method="post")
     include form
