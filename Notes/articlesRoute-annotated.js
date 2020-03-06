@@ -14,18 +14,24 @@ function asyncHandler(cb) {
 	};
 }
 
-/* GET articles listing (this is the home view). */
+// GET articles listing
+// Note that this is at whatever.com/articles
 router.get(
 	"/",
+	// Call asyncHandler and pass it an anonymous async callback. The cb takes the request and response
 	asyncHandler(async (req, res) => {
+		// Await Article's findAll method's returned value and store it in 'articles'
 		const articles = await Article.findAll({
+			// findAll takes an object with SQL like options. Here we're basically doing a 'ORDER BY createdAt DESC'
 			order: [["createdAt", "DESC"]]
 		});
+		// Now we can render the page and pass in the articles prop we created above.
 		res.render("articles/index", { articles, title: "simpleBlog!" });
 	})
 );
 
-/* Create a new article form. */
+// Create a new article form.
+// Note that this at articles/new'
 router.get("/new", (req, res) => {
 	// We're passing in an empty article object, but I'm not sure why
 	res.render("articles/new", { article: {}, title: "New Article" });
@@ -37,7 +43,7 @@ router.post(
 	asyncHandler(async (req, res) => {
 		try {
 			// We await the creation of the new row in our table
-			// We pass into create an object with the properties that we specified in the model. But we've built the form to get that info, so we just need to pass in req.body. The request body is an object with exactly the properties that we need.
+			// We pass into create() an object with the properties that we specified in the model. But we've built the form to get that info, so we just need to pass in req.body. The request body is an object with exactly the properties that we need.
 			const article = await Article.create(req.body);
 			// We redirect to the new article. We'll write a route for this below.
 			res.redirect("/articles/" + article.id);
@@ -63,7 +69,10 @@ router.post(
 router.get(
 	"/:id/edit",
 	asyncHandler(async (req, res) => {
+		// In order to edit an article, we need to find it with findByPk(), which takes the article id, which we get from req.params.id
 		const article = await Article.findByPk(req.params.id);
+		// If finding the article is successful, then render the edit view, passing in the details specific to that article, so that the edit view loads with the article content in it. 
+		// NOTE: Part of what really confused me here for a while is that I kept mistaking the path to the view for a route. 
 		if (article) {
 			res.render("articles/edit", { article, title: "Edit Article" });
 		} else {
@@ -90,16 +99,21 @@ router.get(
 );
 
 /* Update an article. */
+// To update an article we need to post to the /:id/edit route
 router.post(
 	"/:id/edit",
 	asyncHandler(async (req, res) => {
+	// Define article outside the try...catch
     let article;
 		try {
+			// Await the findByPk() method's returned value
 			article = await Article.findByPk(req.params.id);
-			// A promise is returned, so I can chain the next command to article
+			// We're using await, so a promise is returned, so I can chain the next command to article. So here we're awaiting the update() method. We passed in the request body with all of our form submission data
 			await article.update(req.body);
+			// If awaiting article is successful, then render the article again.  
 			if (article) {
-				res.render(`articles/${article.id}`, {
+				//NOTE: I couldn't get this to work for a while b/c I was treating the path to the article template as though it were a route
+				res.render('articles/show', {
 					article,
 					title: article.title
 				});
